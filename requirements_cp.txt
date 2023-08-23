@@ -100,6 +100,7 @@ geopandas                     0.12.2
 gitdb                         4.0.10
 GitPython                     3.1.31
 glob2                         0.7
+graphviz                      0.20.1
 greenlet                      2.0.1
 h5py                          3.7.0
 HeapDict                      1.0.1
@@ -246,6 +247,7 @@ pycurl                        7.45.1
 pydantic                      1.10.8
 PyDispatcher                  2.0.5
 pydocstyle                    6.3.0
+pydot                         1.4.2
 pyerfa                        2.0.0
 pyflakes                      3.0.1
 pyFUME                        0.2.25
