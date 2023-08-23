@@ -1,16 +1,19 @@
 # Police et reglages
-font_title = {'family': 'serif', 'color':  '#114b98', 'weight': 'bold', 'size': 16,}
-font_title2 = {'family': 'serif', 'color':  '#114b98', 'weight': 'bold', 'size': 12,}
-font_title3 = {'family': 'serif', 'color':  '#4F6272', 'weight': 'bold', 'size': 10,}
+
+from pandas import Series
+
+font_title = {'family': 'serif', 'color': '#114b98', 'weight': 'bold', 'size': 16, }
+font_title2 = {'family': 'serif', 'color': '#114b98', 'weight': 'bold', 'size': 12, }
+font_title3 = {'family': 'serif', 'color': '#4F6272', 'weight': 'bold', 'size': 10, }
 
 mycolors = ["black", "hotpink", "b", "#4CAF50"]
-AllColors=['#99ff99', '#66b3ff', '#4F6272', '#B7C3F3', '#ff9999', '#ffcc99', '#ff6666', '#DD7596', '#8EB897',
-           '#c2c2f0', '#DDA0DD', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
-           '#7f7f7f', '#bcbd22', '#17becf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33',
-           '#a65628', '#f781bf', "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000"]
+AllColors = ['#99ff99', '#66b3ff', '#4F6272', '#B7C3F3', '#ff9999', '#ffcc99', '#ff6666', '#DD7596', '#8EB897',
+             '#c2c2f0', '#DDA0DD', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
+             '#7f7f7f', '#bcbd22', '#17becf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33',
+             '#a65628', '#f781bf', "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7",
+             "#000000"]
 
-
-random_state=42
+random_state = 42
 
 # ---------------------------------------------------------------
 #  Fonctions pour la partie NLP
@@ -20,43 +23,120 @@ random_state=42
 import os
 import seaborn as sns
 from sklearn.cluster import KMeans
-from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics import adjusted_rand_score, accuracy_score
+from tqdm import tqdm  # Import tqdm for the progress bar
 import time
+import shutil
+
 
 class clr:
-    start = '\033[93m'+'\033[1m'
+    start = '\033[93m' + '\033[1m'
     color = '\033[93m'
     end = '\033[0m'
 
 
-# Fonction pour créer un dossier s'il n'existe pas déjà
+import sys
 
+
+def is_colab_environment():
+    # Vérifier si le module 'google.colab' est présent dans la liste des modules importés
+    return 'google.colab' in sys.modules
+
+
+# Exemple d'utilisation
+if is_colab_environment():
+    print("Le code s'exécute dans l'environnement Google Colab.")
+else:
+    print("Le code s'exécute dans un environnement local.")
+
+if is_colab_environment():
+    from google.colab import drive
+
+    drive.mount('/content/drive')
+
+
+# --------------------------------------------------------------------
+# Fonction pour créer un dossier s'il n'existe pas déjà
+# --------------------------------------------------------------------
 def os_make_dir(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-# Fonction pour rejoindre un dossier et un fichier
 
+# --------------------------------------------------------------------
+# Fonction pour rejoindre un dossier et un fichier
+# --------------------------------------------------------------------
 def os_path_join(folder, file):
     """Remplacement pour `os.path.join(folder, file)` sur Windows"""
     return f'{folder}/{file}'
 
+
+# ---------------------------------------------------------------------------------
+#  Repertoire de travail
+#  Configuration des chemins de dossiers pour les différents environnements
+# _________________________________________________________________________________
+
+if not is_colab_environment():
+    # Développement local
+    DATA_FOLDER = './Flipkart'
+    # Création d'une variable IMG_FOLDER pour le chemin complet du dossier d'images
+    IMG_FOLDER = os_path_join(DATA_FOLDER, 'Images')
+    OUT_FOLDER = f'{DATA_FOLDER}/output'
+    IMAGE_FOLDER = f'{DATA_FOLDER}/Images'
+    GRAPH_FOLDER = os_path_join(DATA_FOLDER, 'Graphs')  # graphique pour les diapos
+    IMG_FOLDER_PROCESS = os_path_join(DATA_FOLDER, 'Images_process')  # Images traitées
+
+# Définition des chemins de dossiers pour l'environnement Colab
+if is_colab_environment():
+    # Colaboratory - décommentez les 2 lignes suivantes pour connecter à votre drive
+    # from google.colab import drive
+    # drive.mount('/content/drive')
+    DATA_FOLDER = '/content/drive/MyDrive/OC-Projet-6'
+
+    # Création d'une variable IMG_FOLDER pour le chemin complet du dossier d'images
+    IMG_FOLDER = os_path_join(DATA_FOLDER, 'Flipkart/Images')
+    OUT_FOLDER = f'{DATA_FOLDER}/Flipkart/output'
+    IMAGE_FOLDER = f'{DATA_FOLDER}/Flipkart/Images'
+    GRAPH_FOLDER = os_path_join(DATA_FOLDER, 'Flipkart/Graphs')  # graphique pour les diapos
+    IMG_FOLDER_PROCESS = os_path_join(DATA_FOLDER, 'Flipkart/Images_process')  # Images traitées
+
+SAVE_IMAGES = True
+# imgPath = f'{DATA_FOLDER}/Graphs'
+# if not os.path.exists(imgPath[:-1]):
+#     os.makedirs(imgPath[:-1])
+
+# Crée les dossiers spécifiés s'ils n'existent pas déjà
+os_make_dir(IMAGE_FOLDER)
+os_make_dir(OUT_FOLDER)
+os_make_dir(GRAPH_FOLDER)  # graphique pour les diapos
+os_make_dir(IMG_FOLDER_PROCESS)
+imgPath = f'{GRAPH_FOLDER}/'
+print(GRAPH_FOLDER)
+os.listdir(DATA_FOLDER)[:5]
 
 # ---------------------------------------------------------------
 #  Sauvegarde des images
 # _______________________________________________________________
 import matplotlib.pyplot as plt
 
-SAVE_IMAGES=True
+SAVE_IMAGES = True
 
-def sanitize(fig_name: str) -> str:
+
+def trim_axs(axs, N):
+    axs = axs.flat
+    for ax in axs[N:]:
+        ax.remove()
+    return axs[:N]
+
+
+def fig_name_cleaning(fig_name: str) -> str:
     """Enlever les caractères interdits dans les filenames ou filepaths"""
     return (fig_name.replace(' ', '_').replace(':', '-')
             .replace('.', '-').replace('/', '_').replace('>', 'gt.')
             .replace('_\n', '').replace('\n', '').replace('<', 'lt.'))
 
 
-def to_png(graph_folder, fig_name=None) -> None:
+def to_png(fig_name=None) -> None:
     """
     Register the current plot figure as an image in a file.
     Must call plt.show() or show image (by calling to_png() as last row in python cell)
@@ -77,10 +157,10 @@ def to_png(graph_folder, fig_name=None) -> None:
         elif len(fig_name) < 9:
             fig_name = f'{fig_name}_{get_title()}'
 
-        fig_name = sanitize(fig_name)
+        fig_name = fig_name_cleaning(fig_name)
         print(f'"{fig_name}.png"')
         plt.gcf().savefig(
-            os_path_join(f'{graph_folder}', f'{fig_name}.png'),
+            os_path_join(f'{GRAPH_FOLDER}', f'{fig_name}.png'),
             bbox_inches='tight')
 
 
@@ -89,16 +169,19 @@ def completude(data):
 
     for col in data.columns:
         var_dict[col] = []
-        var_dict[col].append(round((data[col].notna().sum()/data.shape[0])*100,2))
+        var_dict[col].append(round((data[col].notna().sum() / data.shape[0]) * 100, 2))
         var_dict[col].append(data[col].isna().sum())
-        var_dict[col].append(round(data[col].isna().mean()*100,2))
+        var_dict[col].append(round(data[col].isna().mean() * 100, 2))
 
-    return pd.DataFrame.from_dict(data=var_dict, orient="index", columns = ["Taux completion", "Nb missings","%missings"]).sort_values(by="Taux completion", ascending=False)
+    return pd.DataFrame.from_dict(data=var_dict, orient="index",
+                                  columns=["Taux completion", "Nb missings", "%missings"]).sort_values(
+        by="Taux completion", ascending=False)
 
 
 def namestr(obj, namespace):
     ''' fonction retourne le nom en string '''
     return [name for name in namespace if namespace[name] is obj]
+
 
 def namestr(obj, namespace):
     """
@@ -110,39 +193,39 @@ def namestr(obj, namespace):
     return [name for name in namespace if namespace[name] is obj]
 
 
-
-
-
-
-def Camembert(data,col):
+def Camembert(data, col):
     df = data[col].value_counts().reset_index()
-    L=len(df[col])
-    labels=list(df['index'])
-    sizes=list(df[col])
+    L = len(df[col])
+    labels = list(df['index'])
+    sizes = list(df[col])
     # print(labels,"\n",sizes)
     explode = Explodetuple(L)
-    colors =AllColors[:L]
+    colors = AllColors[:L]
     fig1, ax1 = plt.subplots(figsize=(7, 5))
-    ax1.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',shadow=True, startangle=0)
+    ax1.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=0)
     # Equal aspect ratio ensures that pie is drawn as a circle
     ax1.axis('equal')
     plt.tight_layout()
     plt.show()
 
-def remplacement(data, cols, caracter1,caracter2):
+
+def remplacement(data, cols, caracter1, caracter2):
     for col in cols:
         data[col] = data[col].str.lower().str.replace(caracter1, caracter2)
     return data
 
-def remplacement2(data, cols, caracter1,caracter2):
+
+def remplacement2(data, cols, caracter1, caracter2):
     for col in cols:
         data[col] = data[col].str.replace(caracter1, caracter2)
     return data
 
+
 def recodage(data, cols):
     for col in cols:
-        data[col] = np.where((data[col].isnull()==True), "unknown", np.where(data[col] == "", "unknown", data[col]))
+        data[col] = np.where((data[col].isnull() == True), "unknown", np.where(data[col] == "", "unknown", data[col]))
     return data
+
 
 # Cette fonction permet de lister les modalités avec leur occurence d'unchamp qui cumule differentes modalités.
 def top_words(data, cols, nb_top=100):
@@ -153,31 +236,33 @@ def top_words(data, cols, nb_top=100):
         for word in col.split(','):
             if word in count_keyword.keys():
                 count_keyword[word] += 1
-            else :
+            else:
                 count_keyword[word] = 1
 
     keyword_top = []
-    for k,v in count_keyword.items():
-        keyword_top.append([k,v])
-    keyword_top.sort(key = lambda x:x[1], reverse = True)
+    for k, v in count_keyword.items():
+        keyword_top.append([k, v])
+    keyword_top.sort(key=lambda x: x[1], reverse=True)
     return keyword_top[:nb_top]
 
 
 def Explodetuple(m):
-    liste1=[]
+    liste1 = []
     for t in range(m):
-        if t in [0,1] :
+        if t in [0, 1]:
             liste1.append(0.1)
         else:
             liste1.append(0)
     return tuple(liste1)
 
+
 def percentFreq(values):
     def my_format(pct):
         total = sum(values)
-        val = int(round(pct*total/100.0))
+        val = int(round(pct * total / 100.0))
         # return '{:.1f}%\n({v:d})'.format(pct, v=val)
         return '{:.1f}%({v:d})'.format(pct, v=val)
+
     return my_format
 
 
@@ -200,14 +285,13 @@ def repartitionTypeVar(data, figsize=(6, 3),
     # Supprimer l'appel à plt.legend()
     plt.legend()
 
-    #plt.show()
+    # plt.show()
     return fig1, ax1
 
 
-
 def fillingRate(data, grahName=''):
-    filled =data.notna().sum().sum()/(data.shape[0]*data.shape[1])
-    missing =data.isna().sum().sum()/(data.shape[0]*data.shape[1])
+    filled = data.notna().sum().sum() / (data.shape[0] * data.shape[1])
+    missing = data.isna().sum().sum() / (data.shape[0] * data.shape[1])
 
     taux = [filled, missing]
     labels = ["%filled", "%missing"]
@@ -216,42 +300,49 @@ def fillingRate(data, grahName=''):
     plt.title("Taux de completion \n", fontdict=font_title)
     ax.axis("equal")
     explode = (0.1, 0)
-    ax.pie(taux, explode=explode, labels=labels, autopct='%1.2f%%', shadow=True,)
+    ax.pie(taux, explode=explode, labels=labels, autopct='%1.2f%%', shadow=True, )
     plt.legend(labels)
-    if grahName!='':
-        plt.savefig(imgPath+grahName, bbox_inches='tight')
+    if grahName != '':
+        plt.savefig(imgPath + grahName, bbox_inches='tight')
         plt.show()
-        #plt.close()
+        # plt.close()
+
 
 import pandas as pd
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
-def nuageMots(data, col,figsize=(16,12),color="white",graphName=''):
+
+def nuageMots(data, col, figsize=(16, 12), color="white", graphName=''):
     display(Markdown('------------------------------------'))
     display(Markdown('#### Nuage de mots sur : {0}'.format(col)))
     display(Markdown('------------------------------------'))
     fig = plt.figure(1, figsize=figsize)
-    ax1 = fig.add_subplot(1,1,1)
-    #Creation de la variable text
-    df=data.loc[data[col].notnull(),:]
+    ax1 = fig.add_subplot(1, 1, 1)
+    # Creation de la variable text
+    df = data.loc[data[col].notnull(), :]
     text = ' '.join(cat for cat in df[col])
     # Carte avec les mots: background_color="salmon"
-    word_cloud = WordCloud(width=2000,height=1000,normalize_plurals=False,random_state=1,# colormap="Pastel1",
-                           collocations=False,stopwords=STOPWORDS, background_color=color, ).generate(text)
+    word_cloud = WordCloud(width=2000, height=1000, normalize_plurals=False, random_state=1,  # colormap="Pastel1",
+                           collocations=False, stopwords=STOPWORDS, background_color=color, ).generate(text)
     ax1.imshow(word_cloud, interpolation="bilinear")
     # Afficher le nuage
     plt.imshow(word_cloud)
     plt.axis("off")
-    if graphName!='':
-        plt.savefig(imgPath+graphName, bbox_inches='tight')
+    if graphName != '':
+        plt.savefig(imgPath + graphName, bbox_inches='tight')
     plt.show()
     plt.close()
+
+
 # ----------------------------------------------------------------------------
 # Frequence sur des colonnes
 # ----------------------------------------------------------------------------
 from IPython.display import display, Markdown
-def freqSimple (data, cols):
+
+
+def freqSimple(data, cols):
     return data[cols].unique().tolist()
+
 
 def valeurUnique(data, cols):
     return data.drop_duplicates(subset=cols)[cols]
@@ -260,14 +351,14 @@ def valeurUnique(data, cols):
 def freqSimple2(data, col_names):
     for col_name in col_names:
         effectifs = data[col_name].value_counts()
-        modalites = effectifs.index # l'index de effectifs contient les modalités
-        tab = pd.DataFrame(modalites, columns = [col_name]) # création du tableau à partir des modalités
+        modalites = effectifs.index  # l'index de effectifs contient les modalités
+        tab = pd.DataFrame(modalites, columns=[col_name])  # création du tableau à partir des modalités
         tab["Nombre"] = effectifs.values
-        tab["Frequence"] = tab["Nombre"] / len(data) # len(data) renvoie la taille de l'échantillon
+        tab["Frequence"] = tab["Nombre"] / len(data)  # len(data) renvoie la taille de l'échantillon
         # tab = tab.sort_values(col_name) # tri des valeurs de la variable X (croissant)
-        tab["Freq. cumul"] = tab["Frequence"].cumsum() # cumsum calcule la somme cumulée
+        tab["Freq. cumul"] = tab["Frequence"].cumsum()  # cumsum calcule la somme cumulée
         display(Markdown('------------------------------------'))
-        display(Markdown('#### Fréquence sur la variable ***' + col_name+'***'))
+        display(Markdown('#### Fréquence sur la variable ***' + col_name + '***'))
         display(Markdown('------------------------------------'))
         display(tab)
 
@@ -443,29 +534,33 @@ def barplot3(pd_df, varX, varY, agg_func, title, xrotation=0, labrotation=45,
         fig.savefig(imgPath + graphName, bbox_inches='tight')
     plt.show()
 
+
 # decoupage du dataset par classe
 import matplotlib.colors as mcolors
 
+
 def labeler(pct, allvals):
-    absolute = int(pct/100.*np.sum(allvals))
+    absolute = int(pct / 100. * np.sum(allvals))
     return "{:.1f}%\n({:d})".format(pct, absolute)
 
-def pie_chart(df, category, detache=False, figsize=(6,6)):
+
+def pie_chart(df, category, detache=False, figsize=(6, 6)):
     classes = list(df[category].unique())
     L = len(classes)
     if detache:
         explode = Explodetuple(L)
     else:
-        explode=[0]*L
+        explode = [0] * L
 
     sizes = []
-    for c in classes :
+    for c in classes:
         sizes.append(df.loc[df[category] == c, category].count())
     fig0, ax1 = plt.subplots(figsize=figsize)
     wedges, texts, autotexts = ax1.pie(sizes, explode=explode,
                                        autopct=lambda pct: labeler(pct, sizes),
                                        radius=1,
-                                       colors=mcolors.BASE_COLORS,#['#0066ff','#bb66ff','#cc66ff','#dd66ff','#ee66ff','#ff66ff','#gg66ff'],
+                                       colors=mcolors.BASE_COLORS,
+                                       # ['#0066ff','#bb66ff','#cc66ff','#dd66ff','#ee66ff','#ff66ff','#gg66ff'],
                                        startangle=90,
                                        textprops=dict(color="w"),
                                        wedgeprops=dict(width=0.7, edgecolor='w'))
@@ -474,7 +569,7 @@ def pie_chart(df, category, detache=False, figsize=(6,6)):
                loc='center right',
                bbox_to_anchor=(1.5, 0, 0.5, 1))
 
-    plt.text(0,0, 'TOTAL \n{}'.format(df[category].count()),
+    plt.text(0, 0, 'TOTAL \n{}'.format(df[category].count()),
              weight='bold', size=10, color='#52527a',
              ha='center', va='center')
 
@@ -483,10 +578,7 @@ def pie_chart(df, category, detache=False, figsize=(6,6)):
     plt.show()
 
 
-
-
-
-def mostFreqTags(df:pd.DataFrame, col, nb=10, others=True, normalize=False):
+def mostFreqTags(df: pd.DataFrame, col, nb=10, others=True, normalize=False):
     """
     Compte la fréquence des n tags les plus fréquents
     return : value_counts comme un dataframe
@@ -506,7 +598,6 @@ def mostFreqTags(df:pd.DataFrame, col, nb=10, others=True, normalize=False):
 def plot_mostFreqTags(df: pd.DataFrame, col, nb=20, others=True, normalize=False,
                       sort_values=False, palette=None,
                       ylabel=None, titre='', soustitre='', figsize=None):
-
     data = mostFreqTags(df, col, nb, others, normalize).copy()
     # print(data.columns.to_list())
     ax = None
@@ -543,9 +634,35 @@ def plot_mostFreqTags(df: pd.DataFrame, col, nb=20, others=True, normalize=False
     plt.tight_layout()
 
 
+def copy_images(data, from_dir, dest_dir):
+    """
+    Copie les images d'un répertoire source vers un répertoire de destination.
+
+    Args:
+        data (pandas.DataFrame): Un DataFrame contenant les données d'images avec au moins
+        les colonnes 'category1' et 'image'.
+        from_dir (str): Le chemin du répertoire source où se trouvent les images.
+        dest_dir (str): Le chemin du répertoire de destination où les images
+        seront copiées en fonction des catégories.
+
+    Returns:
+        None
+    """
+    for index, row in tqdm(data.iterrows(), total=len(data), desc="Copie des Images"):
+        label = row['category1'].strip()
+        chemin_source = os_path_join(from_dir, row['image'])
+        dossier_label = os_path_join(dest_dir, label)
+        # os.makedirs(dossier_label, exist_ok=True)
+        os_make_dir(dossier_label)  # crée le repertoire si inexistant
+        chemin_destination = os_path_join(dossier_label, row['image'])
+        shutil.copy(chemin_source, chemin_destination)
+
+    print(f"Copie des images vers {dest_dir} est terminée ! ")
+
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+
 
 def pca_data(X, scaler=StandardScaler(), n_comp=0.95):
     '''
@@ -586,20 +703,21 @@ def pca_data(X, scaler=StandardScaler(), n_comp=0.95):
     c = 0
     for i in pca.explained_variance_ratio_.cumsum():
         c += 1
-        if(i >= n_comp):
+        if (i >= n_comp):
             break
     X_reduced = pca.fit_transform(X)[:, :c]
     # c=X_reduced.shape[1]
     # Afficher la forme (shape) des données après la réduction de dimension
     print()
     print("Shape après réduction :", X_reduced.shape)
-    print("Il faut {} composantes pour expliquer {:.0f}% de la variance du dataset.".format(c, n_comp*100))
+    print("Il faut {} composantes pour expliquer {:.0f}% de la variance du dataset.".format(c, n_comp * 100))
     print()
     return X_reduced, c
 
 
 import numpy as np
 from sklearn.manifold import TSNE
+
 
 def tsne_data(X, n_components=2, perplexity=30):
     """
@@ -619,11 +737,20 @@ def tsne_data(X, n_components=2, perplexity=30):
     tsne_data = tsne.fit_transform(X)
     return tsne_data
 
-# Supposons que vous ayez déjà les données transformées X_pca, les catégories réelles y_true et les clusters prédits y_pred
+
+def get_dataframe_name(df):
+    # Parcours de l'espace de noms global pour trouver le nom correspondant au DataFrame
+    for name, obj in globals().items():
+        if isinstance(obj, pd.DataFrame) and obj is df:
+            return name
+        elif isinstance(obj, np.ndarray) and obj is df:
+            return name
+    return None  # Si le DataFrame n'est pas trouvé
+
 
 def visu_categories(X_pca, y_true, reduction='PCA', figsize=(15, 6)):
     time1 = time.time()
-    num_labels=len(y_true.unique())
+    num_labels = len(y_true.unique())
     km = KMeans(n_clusters=num_labels, init='k-means++', random_state=random_state)
 
     if reduction.upper() != 'PCA':
@@ -651,74 +778,81 @@ def visu_categories(X_pca, y_true, reduction='PCA', figsize=(15, 6)):
     sns.scatterplot(
         ax=ax1, x=X_trans.iloc[:, 0], y=X_trans.iloc[:, 1], hue=pd.Series(y_true))
     ax1.set_title('Représentation en fonction des catégories réelles')
-    ax1.legend(loc='upper left', bbox_to_anchor=(-0.5, 1),
-               prop={'size': 10},)# , 'family': 'serif'
+    ax1.legend(loc='best', prop={'size': 11}, )  # loc='upper left', bbox_to_anchor=(-0.5, 1), 'family': 'serif'
+    legend1 = ax1.legend(loc='best', prop={'size': 11})
+    legend1.get_frame().set_alpha(0)  # Rendre la légende transparente
     sns.scatterplot(
-        ax=ax2, x=X_trans.iloc[:, 0], y=X_trans.iloc[:, 1], hue=pd.Series(y_pred), )#, palette='Set3'
+        ax=ax2, x=X_trans.iloc[:, 0], y=X_trans.iloc[:, 1], hue=pd.Series(y_pred), )  # , palette='Set3'
     ax2.set_title('Représentation en fonction des clusters')
-    ax2.legend(loc='best', prop={'size': 10},)
-
-    plt.show()
+    ax2.legend(loc='best', prop={'size': 11}, )
+    legend2 = ax1.legend(loc='best', prop={'size': 11})
+    legend2.get_frame().set_alpha(0)  # Rendre la légende transparente
+    to_png(fig_name='visu_' + reduction.lower() + '_' + get_dataframe_name(X_pca))
+    # plt.show()
     return y_pred, ARI
+
 
 # --------------------------------------------------------------------------------
 #  Matrice de confusion
 # --------------------------------------------------------------------------------
-#from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+# from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import confusion_matrix, classification_report
 
-def conf_mat_transform(y_true, y_pred, corresp) :
+
+def conf_mat_transform(y_true, y_pred, corresp):
     conf_mat = confusion_matrix(y_true, y_pred)
     print(conf_mat)
     corresp_cal = np.argmax(conf_mat, axis=0)
     if not corresp:
-        corresp=corresp_cal
+        corresp = corresp_cal
     # corresp = [3, 1, 2, 0]
-    print(clr.color+'*' * 50+clr.end)
-    print(clr.start+f'Correspondance calculée : {corresp_cal}'+clr.end)
-    print(clr.start+f'Correspondance          : {corresp}'+clr.end)
-    print ()
-    print(clr.color+'*' * 50+clr.end)
+    print(clr.color + '*' * 50 + clr.end)
+    print(clr.start + f'Correspondance calculée : {corresp_cal}' + clr.end)
+    print(clr.start + f'Correspondance          : {corresp}' + clr.end)
+    print()
+    print(clr.color + '*' * 50 + clr.end)
 
     # y_pred_transform = np.apply_along_axis(correspond_fct, 1, y_pred)
     labels = pd.Series(y_true, name="y_true").to_frame()
     labels['y_pred'] = y_pred
-    labels['y_pred_transform'] = labels['y_pred'].apply(lambda x : corresp[x])
+    labels['y_pred_transform'] = labels['y_pred'].apply(lambda x: corresp[x])
 
     return labels['y_pred_transform']
 
+
 def matrice_confusion(data, cat_var, cat_code, cv_bagofword, corresp):
-    list_categories=sorted(list(set(data[cat_var])))
-    num_labels=len(list_categories)
-    km = KMeans(n_clusters=num_labels, init='k-means++', random_state= random_state)
+    list_categories = sorted(list(set(data[cat_var])))
+    num_labels = len(list_categories)
+    km = KMeans(n_clusters=num_labels, init='k-means++', random_state=random_state)
     km.fit(cv_bagofword)
 
-    y_true=data[cat_code]
-    y_pred=km.labels_
+    y_true = data[cat_code]
+    y_pred = km.labels_
     # compter les occurrences de chaque cluster
-    cluster_counts = pd.Series(km.labels_).value_counts()
+    cluster_counts: Series = pd.Series(km.labels_).value_counts()
+
     # print(cluster_counts)
 
     cls_labels_transform = conf_mat_transform(y_true, y_pred, corresp)
     conf_mat = confusion_matrix(y_true, cls_labels_transform)
     print(conf_mat)
-    print(clr.color+'*' * 50+clr.end)
-    print(clr.start+'Métriques de performance par classe:.'+clr.end)
-    print(clr.color+'*' * 50+clr.end)
+    print(clr.color + '*' * 50 + clr.end)
+    print(clr.start + 'Métriques de performance par classe:.' + clr.end)
+    print(clr.color + '*' * 50 + clr.end)
     print()
     print(classification_report(y_true, cls_labels_transform))
-
+    accuracy = accuracy_score(y_true, cls_labels_transform)
     # Obtenir l'accuracy
     # accuracy = np.trace(conf_mat) / float(np.sum(conf_mat))
     # Obtenir le rapport de classification (incluant l'accuracy, précision, rappel, f1-score)
     # class_report = classification_report(y_true, cls_labels_transform,
     # target_names=list_categories, output_dict=True)
 
-    df_cm = pd.DataFrame(conf_mat, index = [label for label in list_categories],
-                         columns = [i for i in range(num_labels)])
+    df_cm = pd.DataFrame(conf_mat, index=[label for label in list_categories],
+                         columns=[i for i in range(num_labels)])
 
-    plt.figure(figsize = (6,4))
-    ax=sns.heatmap(df_cm, annot=True, fmt=".0f", cmap="Blues", annot_kws={"size": 9})
+    plt.figure(figsize=(6, 4))
+    ax = sns.heatmap(df_cm, annot=True, fmt=".0f", cmap="Blues", annot_kws={"size": 9})
     ax.set_title('Matrice de confusion\n')
     # ax.set_xticklabels(Corresp, rotation=0)
 
@@ -726,4 +860,48 @@ def matrice_confusion(data, cat_var, cat_code, cv_bagofword, corresp):
     # if list_categories is not None:
     #     plt.xticks(ticks=np.arange(len(list_categories)), labels=list_categories, rotation=45)
     #     plt.yticks(ticks=np.arange(len(list_categories)), labels=list_categories, rotation=0)
+    return accuracy
 
+
+# ---------------------------------------------------------------
+#  Sauvegarde des fichiers
+# --------------------------------------------------------------
+import pickle
+
+
+def save_pickle(data: pd.DataFrame, filename: str, dossier: str):
+    if not os.path.exists(dossier):
+        os.makedirs(dossier)
+    chemin = os_path_join(dossier, filename)
+    with open(chemin, 'wb') as file:
+        pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
+
+
+def load_pickle(file_path: str):
+    with open(file_path, 'rb') as file:
+        data = pickle.load(file)
+    return data
+
+
+def performances_summary(model_name, ARI, accuracy, processing_time):
+    # Créer un dictionnaire à partir des listes
+    data = {
+        'Model': [model_name],
+        'ARI': [ARI],
+        'Accuracy': [accuracy],
+        'Time_min': [processing_time / 60]
+    }
+    # Créer le DataFrame
+    df = pd.DataFrame(data)
+    save_pickle(df, f'measures_{model_name}.pickle', f'{OUT_FOLDER}')
+    return df
+
+
+import cv2
+
+
+# Convertir l'image en niveaux de gris OpenCV
+def img_to_gray_opencv(img):
+    if isinstance(img, Image.Image):
+        img = np.array(img)
+    return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)

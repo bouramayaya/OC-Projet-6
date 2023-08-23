@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="OC-DS-P6-Classifiez_automatiquement_biens_consommation">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/OC-DS-P6-Classifiez_automatiquement_biens_consommation/P6_01_02_notebook_NLP_TE_LDA_NMF.zip!/" />
+      <root url="jar://$PROJECT_DIR$/OC-DS-P6-Classifiez_automatiquement_biens_consommation/P6_01_01_notebook_NLP_WE.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

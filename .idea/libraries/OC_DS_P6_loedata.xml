@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="OC-DS-P6-loedata">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/OC-DS-P6-loedata/P6_01_01_notebook_NLP_WE.zip!/" />
+      <root url="jar://$PROJECT_DIR$/OC-DS-P6-loedata/P6_01_02_notebook_NLP_TE_LDA_NMF.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
